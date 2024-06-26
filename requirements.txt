@@ -1,0 +1,7 @@
+inflection
+jinja2
+crimson-code-extractor
+crimson-ast-dev-tool
+crimson-file-loader
+pytest
+pytest-cov

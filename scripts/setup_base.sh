@@ -1,0 +1,1 @@
+pip install -r ./scripts/setup_requirements.txt

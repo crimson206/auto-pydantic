@@ -1,0 +1,17 @@
+# .flake8
+[flake8]
+
+# E203: Whitespace before ':'
+# E501: Line too long (79 characters)
+# W503: Line break before binary operator
+# W605: Invalid escape sequence
+# E305: expected 2 blank lines after class or function definition
+# # this comment will cause the warning.
+# variable = 1
+
+# W605: To use the crimson-templator module
+ignore = E501, W605
+
+# E305: To add 
+per-file-ignores =
+    generate_toml.py: E305, E302
