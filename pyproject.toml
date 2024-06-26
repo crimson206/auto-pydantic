@@ -21,7 +21,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "pydantic",  # Assuming core also uses pydantic, adjust as necessary
+    "pydantic",
+    "crimson-code-extractor",
+    "crimson-ast-dev-tool"
 ]
 requires-python = ">=3.9"
 
