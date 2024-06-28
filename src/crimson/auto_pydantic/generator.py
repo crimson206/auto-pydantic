@@ -6,6 +6,38 @@ import ast
 
 
 def generate_constructor(function_node: ast.FunctionDef, indent: int = 4) -> str:
+    """
+    # generate_constructor
+
+    ## Description
+    The `generate_constructor` function generates a constructor method for a Pydantic model based on the given function node. It creates an `__init__` method that initializes the model's attributes using the function's parameters.
+
+    ## Parameters
+    - `function_node` (ast.FunctionDef): An Abstract Syntax Tree (AST) node representing the function for which the constructor is being generated.
+    - `indent` (int, optional): The number of spaces to use for indentation. Default is 4.
+
+    ## Returns
+    - `str`: A string containing the generated constructor method.
+
+    ## Functionality
+    1. Extracts the function specification from the given AST node.
+    2. Determines if the function is already an `__init__` method or a regular function.
+    3. Generates the method signature with appropriate parameters.
+    4. Creates a `super().__init__()` call to initialize the Pydantic model.
+    5. Includes all function parameters in the `super().__init__()` call, except for `self` and `cls`.
+
+    ## Example Output
+    ```python
+    def __init__(self, arg1: int, arg2: str = 'default'):
+        super().__init__(arg1=arg1, arg2=arg2)
+    ```
+
+    ## Notes
+    - The function handles both regular functions and existing `__init__` methods.
+    - It properly handles default values and type annotations from the original function.
+    - The generated constructor is compatible with Pydantic's model initialization.
+    """
+
     func_spec = extract.extract_func_spec(function_node)
     indent = " " * indent
     if func_spec.name == "__init__":
