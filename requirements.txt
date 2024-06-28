@@ -1,7 +1,4 @@
-inflection
-jinja2
+pydantic
 crimson-code-extractor
 crimson-ast-dev-tool
-crimson-file-loader
-pytest
-pytest-cov
+inflection

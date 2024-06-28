@@ -1,6 +1,6 @@
 from typing import Callable, Dict, Any
 import ast
-from crimson.ast_dev_tool import get_first_node
+from crimson.ast_dev_tool import collect_nodes
 from crimson.auto_pydantic.generator import generate_input_props, _generate_input_props_name
 from inspect import getsource
 import typing
@@ -31,7 +31,7 @@ def _prepare_namespace(currentframe, args, kwargs) -> Dict[str, Any]:
 
 def _get_function_node(func: Callable) -> ast.FunctionDef:
     func_source = getsource(func)
-    return get_first_node(func_source, ast.FunctionDef)
+    return collect_nodes(func_source, ast.FunctionDef)[0]
 
 
 def _get_or_create_input_props(

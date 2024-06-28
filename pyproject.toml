@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crimson-auto-pydantic"
-version = "0.1.0"
+version = "0.1.1"
 description = "Template Tools"
 readme = "README.md"
 authors = [
@@ -23,7 +23,8 @@ classifiers = [
 dependencies = [
     "pydantic",
     "crimson-code-extractor",
-    "crimson-ast-dev-tool"
+    "crimson-ast-dev-tool",
+    "inflection"
 ]
 requires-python = ">=3.9"
 
