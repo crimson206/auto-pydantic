@@ -1,43 +1,92 @@
 from inflection import camelize
-from typing import List
+from typing import List, Generic, TypeVar, Union, Callable, Tuple
 from crimson.code_extractor import extract
-from crimson.ast_dev_tool import safe_unparse
+from crimson.ast_dev_tool import safe_unparse, collect_nodes
+from crimson.intelli_type import IntelliType
+from crimson.intelli_type._replace_union import as_union
+from inspect import getsource
 import ast
 
+T = TypeVar("T")
 
-def generate_constructor(function_node: ast.FunctionDef, indent: int = 4) -> str:
+
+class Function_(IntelliType, Tuple[as_union, Callable, str, ast.FunctionDef], Generic[T]):
     """
-    # generate_constructor
+    def func(arg1:int):
+        return arg1
 
-    ## Description
-    The `generate_constructor` function generates a constructor method for a Pydantic model based on the given function node. It creates an `__init__` method that initializes the model's attributes using the function's parameters.
 
-    ## Parameters
-    - `function_node` (ast.FunctionDef): An Abstract Syntax Tree (AST) node representing the function for which the constructor is being generated.
-    - `indent` (int, optional): The number of spaces to use for indentation. Default is 4.
+    It can be any of them among,
 
-    ## Returns
-    - `str`: A string containing the generated constructor method.
+    func
+    function_code = inspect.getsource(func)
+    function_node = ast.parse(function_code)
 
-    ## Functionality
-    1. Extracts the function specification from the given AST node.
-    2. Determines if the function is already an `__init__` method or a regular function.
-    3. Generates the method signature with appropriate parameters.
-    4. Creates a `super().__init__()` call to initialize the Pydantic model.
-    5. Includes all function parameters in the `super().__init__()` call, except for `self` and `cls`.
+    It is safe even if,
+        - The function is not places at the first
+        - There are many functions in it
 
-    ## Example Output
-    ```python
-    def __init__(self, arg1: int, arg2: str = 'default'):
-        super().__init__(arg1=arg1, arg2=arg2)
-    ```
-
-    ## Notes
-    - The function handles both regular functions and existing `__init__` methods.
-    - It properly handles default values and type annotations from the original function.
-    - The generated constructor is compatible with Pydantic's model initialization.
+    All the functions from auto-pydantic will deal with them flexibly.
+    If there are many functions in it, the first function is the object this module uses.
     """
 
+
+class Constructor_(IntelliType, str, Generic[T]):
+    """
+    It is the code lines of the constructor of the pydantic model.
+
+    It allows you to use the model in the same structure where you use the function.
+
+    function:
+        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs, ) -> str:
+            return "bye"
+
+    constructor: str
+        def __init__(self, arg1: int, *args: Tuple[int, int], arg2: str='hi', arg3: int=1, **kwargs):
+            super().__init__(arg1=arg1, args=args, arg2=arg2, arg3=arg3, kwargs=kwargs)
+
+    """
+
+
+class InputProps_(IntelliType, str, Generic[T]):
+    """
+    It is the code lines of the InputProps model for the target function's input parameters.
+
+    function:
+        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs, ) -> str:
+            return "bye"
+
+    input_props: str
+        class Func2InputProps(BaseModel):
+            arg1: int = Field(...)
+            args: Tuple[int, int] = Field(default=())
+            arg2: str = Field(default="'hi'")
+            arg3: int = Field(default='1')
+            kwargs: Any = Field(default={})
+
+            \{optional_constructor\}
+
+    """
+
+
+class OutputProps_(IntelliType, str, Generic[T]):
+    """
+    It is the code lines of the OutputProps model for the target function's return annotation.
+
+    function:
+        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs, ) -> str:
+            return "bye"
+
+    output_props: str
+        class Func2OutputProps(BaseModel):
+            return: str
+    """
+
+
+def generate_constructor(
+    function: Function_[Union[Callable, str, ast.FunctionDef]], indent: int = 4
+) -> Constructor_[str]:
+    function_node = _convert_to_FunctionDef(function)
     func_spec = extract.extract_func_spec(function_node)
     indent = " " * indent
     if func_spec.name == "__init__":
@@ -58,7 +107,10 @@ def generate_constructor(function_node: ast.FunctionDef, indent: int = 4) -> str
     return constructor
 
 
-def generate_input_props(function_node: ast.FunctionDef, constructor: bool = True):
+def generate_input_props(
+    function: Function_[Union[Callable, str, ast.FunctionDef]], add_constructor: bool = True
+) -> InputProps_[str]:
+    function_node: ast.FunctionDef = _convert_to_FunctionDef(function)
     func_spec = extract.extract_func_spec(function_node)
 
     input_props_name = _generate_input_props_name(func_spec.name)
@@ -85,14 +137,16 @@ def generate_input_props(function_node: ast.FunctionDef, constructor: bool = Tru
 
     input_props = "\n".join(input_props_lines)
 
-    if constructor is True:
-        constructor = generate_constructor(function_node)
-        input_props += "\n\n" + constructor
+    if add_constructor is True:
+        add_constructor = generate_constructor(function_node)
+        input_props += "\n\n" + add_constructor
 
     return input_props
 
 
-def generate_output_props(function_node: ast.FunctionDef):
+def generate_output_props(function: Function_[Union[Callable, str, ast.FunctionDef]]) -> OutputProps_[str]:
+    function_node = _convert_to_FunctionDef(function)
+
     func_spec = extract.extract_func_spec(function_node)
     Func_name = camelize(func_spec.name, uppercase_first_letter=True)
 
@@ -114,3 +168,15 @@ def _generate_input_props_name(func_name: str) -> str:
     Func_name = camelize(func_name, uppercase_first_letter=True)
     input_props_name = f"{Func_name}InputProps"
     return input_props_name
+
+
+def _convert_to_FunctionDef(function: Function_[Union[Callable, str, ast.FunctionDef]]) -> ast.FunctionDef:
+    if type(function) is Callable:
+        function = getsource(function)
+
+    if type(function) is str:
+        function = ast.parse(function)
+
+    function_node: ast.FunctionDef = collect_nodes(function, ast.FunctionDef)[0]
+
+    return function_node

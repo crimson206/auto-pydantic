@@ -1,9 +1,7 @@
 import pytest
-from pydantic import ValidationError
-from typing import List, Optional
 from crimson.auto_pydantic.validator import validate
-from pydantic import BaseModel, Field
 from inspect import currentframe
+from pydantic import BaseModel, Field  # noqa: F401
 
 
 def simple_function(arg1: int, arg2: str = "default") -> str:

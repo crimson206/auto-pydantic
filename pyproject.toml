@@ -24,7 +24,8 @@ dependencies = [
     "pydantic",
     "crimson-code-extractor",
     "crimson-ast-dev-tool",
-    "inflection"
+    "inflection",
+    "crimson-intelli-type"
 ]
 requires-python = ">=3.9"
 
