@@ -1,9 +1,16 @@
-from typing import Callable, Dict, Any
-import ast
-from crimson.ast_dev_tool import collect_nodes
-from crimson.auto_pydantic.generator import generate_input_props, _generate_input_props_name
-from inspect import getsource
-import typing
+from typing import Callable, Dict, Any, TypeVar, Generic
+from crimson.auto_pydantic.generator import _generate_input_props_name
+from crimson.auto_pydantic.generator_model import (
+    generate_inputprops_model,
+    _prepare_namespace,
+    CurrentFrame_,
+    Func_,
+    _NameSpace_,
+    _FuncName_,
+)
+from types import FrameType
+from pydantic import BaseModel, Field
+from crimson.intelli_type import IntelliType
 import threading
 
 
@@ -11,51 +18,57 @@ _data_classes_lock = threading.Lock()
 _data_classes = {}
 
 
-def validate(func: Callable, currentframe, *args, **kwargs):
-    namespace = _prepare_namespace(currentframe, args, kwargs)
-    function_node = _get_function_node(func)
-    func_name = _generate_input_props_name(func.__name__)
+T = TypeVar("T")
 
-    InputProps = _get_or_create_input_props(func, function_node, func_name, namespace)
+
+class Config(BaseModel):
+    on: bool = Field(
+        default=True,
+        description="""If it is off(False), the validate function will pass.
+I'd prefer to validate my functions during development, but turn off when I publish my packages.""",
+    )
+
+
+config = Config()
+
+
+class Bool_:
+    """
+    Dummy of bool type.
+    """
+
+
+class Validated_(IntelliType, Bool_, Generic[T]):
+    """
+    It doesn't mean whether the validation was successful or not.
+    It rather shows the validate function was conducted or just passed.
+    """
+    _annotation = bool
+
+
+def validate(func: Func_[Callable], currentframe: CurrentFrame_[FrameType], *args: Any, **kwargs: Any) -> Validated_[bool]:
+    if config.on is False:
+        return False
+
+    namespace = _prepare_namespace(currentframe, args, kwargs)
+    func_name = _generate_input_props_name(func.__name__)
+    InputProps = _get_or_create_input_props(func, currentframe, args, kwargs)
     namespace[func_name] = InputProps
 
     _execute_validation(func_name, namespace)
-
-
-def _prepare_namespace(currentframe, args, kwargs) -> Dict[str, Any]:
-    namespace = {}
-    namespace.update(currentframe.f_globals.copy())
-    namespace.update(_get_types())
-    namespace.update({"args": args, "kwargs": kwargs})
-    return namespace
-
-
-def _get_function_node(func: Callable) -> ast.FunctionDef:
-    func_source = getsource(func)
-    return collect_nodes(func_source, ast.FunctionDef)[0]
+    return True
 
 
 def _get_or_create_input_props(
-    func: Callable, function_node: ast.FunctionDef, func_name: str, namespace: Dict[str, Any]
-):
+    func: Func_[Callable], currentframe: CurrentFrame_[FrameType], *args: Any, **kwargs: Any
+) -> None:
     with _data_classes_lock:
         if func not in _data_classes:
-            _data_classes[func] = _create_input_props(function_node, func_name, namespace)
+            _data_classes[func] = generate_inputprops_model(func, currentframe, args, kwargs)
+
     return _data_classes[func]
 
 
-def _create_input_props(function_node: ast.FunctionDef, func_name: str, namespace: Dict[str, Any]):
-    model = generate_input_props(function_node)
-
-    local_scope = {}
-    exec(model, namespace, local_scope)
-    return local_scope[func_name]
-
-
-def _execute_validation(func_name: str, namespace: Dict[str, Any]):
+def _execute_validation(func_name: _FuncName_[str], namespace: _NameSpace_[Dict[str, Any]]) -> None:
     validation = f"\n{func_name}(*args, **kwargs)"
     exec(validation, namespace)
-
-
-def _get_types() -> Dict[str, Any]:
-    return {"Any": typing.Any}

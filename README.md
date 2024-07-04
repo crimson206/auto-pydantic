@@ -14,10 +14,10 @@ auto-pydantic is a Python module that provides automatic Pydantic model generati
 
 ## Installation
 
-To install auto-pydantic, you can use pip:
+To install crimson-auto-pydantic, you can use pip:
 
 ```
-pip install auto-pydantic
+pip install acrimson-auto-pydantic
 ```
 
 ## Usage
@@ -62,16 +62,3 @@ my_function(1, "test")
 # This will raise a validation error
 my_function("not an int", "test")
 ```
-
-## API Reference
-
-### generator.py
-
-- `generate_input_props(function)`: Generate a Pydantic model for function input parameters
-- `generate_output_props(function)`: Generate a Pydantic model for function return type
-- `generate_constructor(function)`: Generate a constructor for the Pydantic model
-
-### validator.py
-
-- `validate(func, currentframe, *args, **kwargs)`: Validate function inputs against the generated Pydantic model
-
