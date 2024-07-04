@@ -6,6 +6,7 @@ from inspect import getsource
 import typing
 import threading
 
+
 _data_classes_lock = threading.Lock()
 _data_classes = {}
 
@@ -45,6 +46,7 @@ def _get_or_create_input_props(
 
 def _create_input_props(function_node: ast.FunctionDef, func_name: str, namespace: Dict[str, Any]):
     model = generate_input_props(function_node)
+
     local_scope = {}
     exec(model, namespace, local_scope)
     return local_scope[func_name]
