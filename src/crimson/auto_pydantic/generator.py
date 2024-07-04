@@ -12,80 +12,106 @@ T = TypeVar("T")
 
 class Function_(IntelliType, Tuple[as_union, Callable, str, ast.FunctionDef], Generic[T]):
     """
-    def func(arg1:int):
+    A versatile representation of a function that can handle various input types.
+
+    Example:
+    def func(arg1: int):
         return arg1
 
+    This class can handle any of the following representations:
+    - func (the function object itself)
+    - inspect.getsource(func) (the function's source code)
+    - ast.parse(inspect.getsource(func)).body[0] (the AST node of the function)
 
-    It can be any of them among,
+    Key features:
+    - Robust handling of functions, even when they're not the first item in a module
+    - Capable of processing modules with multiple function definitions
+    - All auto-pydantic functions are designed to work flexibly with this class
+    - When multiple functions are present, the first function is used by default
 
-    func
-    function_code = inspect.getsource(func)
-    function_node = ast.parse(function_code)
-
-    It is safe even if,
-        - The function is not places at the first
-        - There are many functions in it
-
-    All the functions from auto-pydantic will deal with them flexibly.
-    If there are many functions in it, the first function is the object this module uses.
+    Note: This flexibility allows for easier integration and usage across different
+    scenarios in the auto-pydantic module.
     """
 
 
 class Constructor_(IntelliType, str, Generic[T]):
     """
-    It is the code lines of the constructor of the pydantic model.
+    Represents the constructor code for a Pydantic model.
 
-    It allows you to use the model in the same structure where you use the function.
+    This class encapsulates the string representation of a Pydantic model's constructor.
+    It allows the model to mirror the structure of the original function it's based on.
 
-    function:
-        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs, ) -> str:
-            return "bye"
+    Example:
+    Original function:
+    def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
+        return "bye"
 
-    constructor: str
-        def __init__(self, arg1: int, *args: Tuple[int, int], arg2: str='hi', arg3: int=1, **kwargs):
-            super().__init__(arg1=arg1, args=args, arg2=arg2, arg3=arg3, kwargs=kwargs)
+    Corresponding constructor:
+    def __init__(self, arg1: int, *args: Tuple[int, int], arg2: str='hi', arg3: int=1, **kwargs):
+        super().__init__(arg1=arg1, args=args, arg2=arg2, arg3=arg3, kwargs=kwargs)
 
+    This constructor ensures that the Pydantic model can be instantiated with the same
+    signature as the original function, maintaining consistency in parameter handling.
     """
 
 
 class InputProps_(IntelliType, str, Generic[T]):
     """
-    It is the code lines of the InputProps model for the target function's input parameters.
+    Represents the input properties of a Pydantic model based on a function's parameters.
 
-    function:
-        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs, ) -> str:
-            return "bye"
+    This class contains the string representation of a Pydantic model class that
+    encapsulates the input parameters of a target function.
 
-    input_props: str
-        class Func2InputProps(BaseModel):
-            arg1: int = Field(...)
-            args: Tuple[int, int] = Field(default=())
-            arg2: str = Field(default="'hi'")
-            arg3: int = Field(default='1')
-            kwargs: Any = Field(default={})
+    Example:
+    For the function:
+    def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
+        return "bye"
 
-            \{optional_constructor\}
+    The corresponding InputProps model would be:
+    class Func2InputProps(BaseModel):
+        arg1: int = Field(...)
+        args: Tuple[int, int] = Field(default=())
+        arg2: str = Field(default="'hi'")
+        arg3: int = Field(default='1')
+        kwargs: Any = Field(default={})
 
+        {optional_constructor}
+
+    Note: The {optional_constructor} placeholder can be replaced with an actual
+    constructor if needed, allowing for flexible model creation.
     """
 
 
 class OutputProps_(IntelliType, str, Generic[T]):
     """
-    It is the code lines of the OutputProps model for the target function's return annotation.
+    Represents the output properties of a Pydantic model based on a function's return type.
 
-    function:
-        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs, ) -> str:
-            return "bye"
+    This class contains the string representation of a Pydantic model class that
+    encapsulates the return type of a target function.
 
-    output_props: str
-        class Func2OutputProps(BaseModel):
-            return: str
+    Example:
+    For the function:
+    def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
+        return "bye"
+
+    The corresponding OutputProps model would be:
+    class Func2OutputProps(BaseModel):
+        return: str
+
+    This model standardizes the function's output, making it easier to validate
+    and work with the return value in a type-safe manner.
     """
 
 
 def generate_constructor(
     function: Function_[Union[Callable, str, ast.FunctionDef]], indent: int = 4
 ) -> Constructor_[str]:
+    """
+    Generate a constructor string for a Pydantic model based on the given function.
+
+    This function creates a constructor that mirrors the input function's signature,
+    allowing for seamless integration with Pydantic models.
+    """
     function_node = _convert_to_FunctionDef(function)
     func_spec = extract.extract_func_spec(function_node)
     indent = " " * indent
@@ -110,6 +136,12 @@ def generate_constructor(
 def generate_input_props(
     function: Function_[Union[Callable, str, ast.FunctionDef]], add_constructor: bool = True
 ) -> InputProps_[str]:
+    """
+    Generate input properties string for a Pydantic model based on the given function.
+
+    This function creates a Pydantic model class that represents the input parameters
+    of the given function, including type annotations and default values.
+    """
     function_node: ast.FunctionDef = _convert_to_FunctionDef(function)
     func_spec = extract.extract_func_spec(function_node)
 
@@ -145,6 +177,12 @@ def generate_input_props(
 
 
 def generate_output_props(function: Function_[Union[Callable, str, ast.FunctionDef]]) -> OutputProps_[str]:
+    """
+    Generate output properties string for a Pydantic model based on the given function.
+
+    This function creates a Pydantic model class that represents the return type
+    of the given function, encapsulating the output in a standardized format.
+    """
     function_node = _convert_to_FunctionDef(function)
 
     func_spec = extract.extract_func_spec(function_node)

@@ -1,7 +1,17 @@
 import pytest
-from crimson.auto_pydantic.validator import validate
+from crimson.auto_pydantic.validator import validate, config
 from inspect import currentframe
-from pydantic import BaseModel, Field  # noqa: F401
+
+
+@pytest.fixture
+def reset_config():
+    original_config = config.on
+    yield
+    config.on = original_config
+
+
+class A:
+    pass
 
 
 def simple_function(arg1: int, arg2: str = "default") -> str:
@@ -10,6 +20,16 @@ def simple_function(arg1: int, arg2: str = "default") -> str:
 
 def complex_function(arg1: int, arg2: int = 1, *args: tuple, kwarg1: str = "default", **kwargs) -> dict:
     return {}
+
+
+def init_generic_function(arg1: A) -> int:
+    validate(init_generic_function, currentframe(), arg1)
+    return 1
+
+
+def init_validate_function(arg1: int, arg2: str = "default") -> str:
+    validate(init_validate_function, currentframe(), arg1, arg2="default")
+    return f"{arg1} {arg2}"
 
 
 def test_validate_simple_valid():
@@ -61,3 +81,36 @@ def test_validate_kwargs():
 def test_validate_mixed_args_kwargs():
     # This should not raise any exception
     validate(complex_function, currentframe(), 1, 2, 3, kwarg1="test", extra="stuff")
+
+
+def test_validate_generic_function():
+    a = A()
+    init_generic_function(a)
+
+
+def test_init_validate_function():
+    init_validate_function(1, "string")
+
+
+def test_validate_simple(reset_config):
+    # Test when config is on
+    config.on = True
+    assert validate(simple_function, currentframe(), 1, "test") is True
+
+    # Test when config is off
+    config.on = False
+    assert validate(simple_function, currentframe(), 1, "test") is False
+
+
+def test_validate_in_function(reset_config):
+    def wrapper_function(x: int, y: str) -> str:
+        validated = validate(simple_function, currentframe(), x, y)
+        return validated
+
+    # Test when config is on
+    config.on = True
+    assert wrapper_function(1, "test") is True
+
+    # Test when config is off
+    config.on = False
+    assert wrapper_function(1, "test") is False
