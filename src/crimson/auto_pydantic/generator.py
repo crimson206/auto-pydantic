@@ -15,19 +15,19 @@ class Function_(IntelliType, Tuple[as_union, Callable, str, ast.FunctionDef], Ge
     A versatile representation of a function that can handle various input types.
 
     Example:
-    def func(arg1: int):
-        return arg1
+        def func(arg1: int):
+            return arg1
 
-    This class can handle any of the following representations:
-    - func (the function object itself)
-    - inspect.getsource(func) (the function's source code)
-    - ast.parse(inspect.getsource(func)).body[0] (the AST node of the function)
+        This class can handle any of the followings:
+        - func
+        - inspect.getsource(func)
+        - ast.parse(inspect.getsource(func)).body[0]
 
     Key features:
-    - Robust handling of functions, even when they're not the first item in a module
-    - Capable of processing modules with multiple function definitions
-    - All auto-pydantic functions are designed to work flexibly with this class
-    - When multiple functions are present, the first function is used by default
+        - Robust handling of functions, even when they're not the first item in a module
+        - Capable of processing modules with multiple function definitions
+        - All auto-pydantic functions are designed to work flexibly with this class
+        - When multiple functions are present, the first function is used by default
 
     Note: This flexibility allows for easier integration and usage across different
     scenarios in the auto-pydantic module.
@@ -42,13 +42,13 @@ class Constructor_(IntelliType, str, Generic[T]):
     It allows the model to mirror the structure of the original function it's based on.
 
     Example:
-    Original function:
-    def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
-        return "bye"
+        Original function:
+            def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
+                return "bye"
 
-    Corresponding constructor:
-    def __init__(self, arg1: int, *args: Tuple[int, int], arg2: str='hi', arg3: int=1, **kwargs):
-        super().__init__(arg1=arg1, args=args, arg2=arg2, arg3=arg3, kwargs=kwargs)
+        Corresponding constructor:
+            def __init__(self, arg1: int, *args: Tuple[int, int], arg2: str='hi', arg3: int=1, **kwargs):
+                super().__init__(arg1=arg1, args=args, arg2=arg2, arg3=arg3, kwargs=kwargs)
 
     This constructor ensures that the Pydantic model can be instantiated with the same
     signature as the original function, maintaining consistency in parameter handling.
@@ -64,18 +64,18 @@ class InputProps_(IntelliType, str, Generic[T]):
 
     Example:
     For the function:
-    def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
-        return "bye"
+        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
+            return "bye"
 
     The corresponding InputProps model would be:
-    class Func2InputProps(BaseModel):
-        arg1: int = Field(...)
-        args: Tuple[int, int] = Field(default=())
-        arg2: str = Field(default="'hi'")
-        arg3: int = Field(default='1')
-        kwargs: Any = Field(default={})
+        class Func2InputProps(BaseModel):
+            arg1: int = Field(...)
+            args: Tuple[int, int] = Field(default=())
+            arg2: str = Field(default="'hi'")
+            arg3: int = Field(default='1')
+            kwargs: Any = Field(default={})
 
-        {optional_constructor}
+            {optional_constructor}
 
     Note: The {optional_constructor} placeholder can be replaced with an actual
     constructor if needed, allowing for flexible model creation.
@@ -90,13 +90,13 @@ class OutputProps_(IntelliType, str, Generic[T]):
     encapsulates the return type of a target function.
 
     Example:
-    For the function:
-    def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
-        return "bye"
+        For the function:
+        def func2(arg1: int, *args: Tuple[int, int], arg2: str = "hi", arg3: int = 1, **kwargs) -> str:
+            return "bye"
 
     The corresponding OutputProps model would be:
-    class Func2OutputProps(BaseModel):
-        return: str
+        class Func2OutputProps(BaseModel):
+            return: str
 
     This model standardizes the function's output, making it easier to validate
     and work with the return value in a type-safe manner.
