@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crimson-auto-pydantic"
-version = "0.1.7"
+version = "0.1.8"
 description = "Automatic Pydantic model generation and validation for function parameters and return types."
 readme = "README.md"
 authors = [
