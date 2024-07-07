@@ -1,6 +1,6 @@
 import pytest
 from crimson.auto_pydantic.validator import validate, config
-from inspect import currentframe
+from inspect import currentframe, getsource
 
 
 @pytest.fixture
@@ -34,6 +34,7 @@ def init_validate_function(arg1: int, arg2: str = "default") -> str:
 
 def test_validate_simple_valid():
     # This should not raise any exception
+    source = getsource(simple_function)
     validate(simple_function, currentframe(), arg1=1, arg2="test")
 
 
