@@ -1,16 +1,15 @@
 from inflection import camelize
-from typing import List, Generic, TypeVar, Union, Callable, Tuple
+from typing import List, Generic, TypeVar, Union, Callable
 from crimson.code_extractor import extract
 from crimson.ast_dev_tool import safe_unparse, collect_nodes
 from crimson.intelli_type import IntelliType
-from crimson.intelli_type._replace_union import as_union
 from inspect import getsource
 import ast
 
 T = TypeVar("T")
 
 
-class Function_(IntelliType, Tuple[as_union, Callable, str, ast.FunctionDef], Generic[T]):
+class Function_(IntelliType[Union[Callable, str, ast.FunctionDef]], Generic[T]):
     """
     A versatile representation of a function that can handle various input types.
 
@@ -34,7 +33,7 @@ class Function_(IntelliType, Tuple[as_union, Callable, str, ast.FunctionDef], Ge
     """
 
 
-class Constructor_(IntelliType, str, Generic[T]):
+class Constructor_(IntelliType[str], Generic[T]):
     """
     Represents the constructor code for a Pydantic model.
 
@@ -55,7 +54,7 @@ class Constructor_(IntelliType, str, Generic[T]):
     """
 
 
-class InputProps_(IntelliType, str, Generic[T]):
+class InputProps_(IntelliType[str], Generic[T]):
     """
     Represents the input properties of a Pydantic model based on a function's parameters.
 
@@ -82,7 +81,7 @@ class InputProps_(IntelliType, str, Generic[T]):
     """
 
 
-class OutputProps_(IntelliType, str, Generic[T]):
+class OutputProps_(IntelliType[str], Generic[T]):
     """
     Represents the output properties of a Pydantic model based on a function's return type.
 
@@ -104,7 +103,7 @@ class OutputProps_(IntelliType, str, Generic[T]):
 
 
 def generate_constructor(
-    function: Function_[Union[Callable, str, ast.FunctionDef]], indent: int = 4
+    function: Union[Callable, str, ast.FunctionDef], indent: int = 4
 ) -> Constructor_[str]:
     """
     Generate a constructor string for a Pydantic model based on the given function.

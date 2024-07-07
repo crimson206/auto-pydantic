@@ -11,7 +11,7 @@ from pydantic import BaseModel
 T = TypeVar("T")
 
 
-class Func_(IntelliType, Callable, Generic[T]):
+class Func_(IntelliType[Callable], Generic[T]):
     """
     Any function you defined.
 
@@ -22,11 +22,7 @@ class Func_(IntelliType, Callable, Generic[T]):
     """
 
 
-class FrameType_:
-    """Dummy of FrameType"""
-
-
-class CurrentFrame_(IntelliType, FrameType_, Generic[T]):
+class CurrentFrame_(IntelliType[FrameType], Generic[T]):
     """
     from inspect import currentframe()
 
@@ -34,22 +30,20 @@ class CurrentFrame_(IntelliType, FrameType_, Generic[T]):
 
     """
 
-    _annotation = FrameType
 
-
-class InputPropsModel_(IntelliType, BaseModel, Generic[T]):
+class InputPropsModel_(IntelliType[BaseModel], Generic[T]):
     """
     The generated model using the inputprops string from 'generator'.
     """
 
 
-class _NameSpace_(IntelliType, Dict[str, Any], Generic[T]):
+class _NameSpace_(IntelliType[Dict[str, Any]], Generic[T]):
     """
     It contains variables to be used to generate inputprops, returnprops, and constructor
     """
 
 
-class _FuncName_(IntelliType, str, Generic[T]):
+class _FuncName_(IntelliType[str], Generic[T]):
     """
     It might be the literal name of a function.
     However, it must be Camel case in the real usage.
@@ -61,13 +55,15 @@ class _FuncName_(IntelliType, str, Generic[T]):
     """
 
 
-class _FunctionNode_(IntelliType, ast.FunctionDef, Generic[T]):
+class _FunctionNode_(IntelliType[ast.FunctionDef], Generic[T]):
     """
     The ast module uses it to extract the props of Func_[str].
     """
 
 
-def generate_inputprops_model(func: Func_[Callable], currentframe: CurrentFrame_[FrameType], *args: Any, **kwargs: Any) -> InputPropsModel_[BaseModel]:
+def generate_inputprops_model(
+    func: Func_[Callable], currentframe: CurrentFrame_[FrameType], *args: Any, **kwargs: Any
+) -> InputPropsModel_[BaseModel]:
     namespace = _prepare_namespace(currentframe, args, kwargs)
     function_node = _get_function_node(func)
     func_name = _generate_input_props_name(func.__name__)
