@@ -7,4 +7,5 @@ conda create --name auto-pydantic python=$PYTHON_VERSION -y
 conda activate auto-pydantic
 
 pip install -r requirements.txt
-
+pip install -r requirements_test.txt
+pip install -r requirements_dev.txt

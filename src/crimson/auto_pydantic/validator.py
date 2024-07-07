@@ -38,7 +38,7 @@ class Bool_:
     """
 
 
-class Validated_(IntelliType, Bool_, Generic[T]):
+class Validated_(IntelliType[bool], Generic[T]):
     """
     It doesn't mean whether the validation was successful or not.
     It rather shows the validate function was conducted or just passed.
