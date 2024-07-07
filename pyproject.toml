@@ -5,20 +5,29 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "crimson-auto-pydantic"
 version = "0.1.6"
-description = "Template Tools"
+description = "Automatic Pydantic model generation and validation for function parameters and return types."
 readme = "README.md"
 authors = [
   { name="Sisung Kim", email="sisung.kim1@gmail.com" },
 ]
 
 classifiers = [
+    "Development Status :: 4 - Beta",
+  
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 
     "Intended Audience :: Developers",
-    "Topic :: Software Development :: Build Tools",
+
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Typehint",
 
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+
+    "Typing :: Typed",
 ]
 dependencies = [
     "pydantic",
