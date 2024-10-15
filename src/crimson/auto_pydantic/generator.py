@@ -54,7 +54,7 @@ class Constructor_(IntelliType[str], Generic[T]):
     """
 
 
-class InputProps_(IntelliType[str], Generic[T]):
+class InputProps_(str, Generic[T]):
     """
     Represents the input properties of a Pydantic model based on a function's parameters.
 
@@ -81,7 +81,7 @@ class InputProps_(IntelliType[str], Generic[T]):
     """
 
 
-class OutputProps_(IntelliType[str], Generic[T]):
+class OutputProps_(str, Generic[T]):
     """
     Represents the output properties of a Pydantic model based on a function's return type.
 
@@ -102,9 +102,7 @@ class OutputProps_(IntelliType[str], Generic[T]):
     """
 
 
-def generate_constructor(
-    function: Union[Callable, str, ast.FunctionDef], indent: int = 4
-) -> Constructor_[str]:
+def generate_constructor(function: Union[Callable, str, ast.FunctionDef], indent: int = 4) -> Constructor_[str]:
     """
     Generate a constructor string for a Pydantic model based on the given function.
 
@@ -188,7 +186,7 @@ def generate_output_props(function: Function_[Union[Callable, str, ast.FunctionD
     Func_name = camelize(func_spec.name, uppercase_first_letter=True)
 
     output_props_lines: List[str] = [f"class {Func_name}OutputProps(BaseModel):"]
-    arg_line_template = "    return: {annotation}"
+    arg_line_template = "    output: {annotation}"
 
     annotation = func_spec.return_annotation if func_spec.return_annotation is not None else "Any"
 
@@ -204,6 +202,12 @@ def generate_output_props(function: Function_[Union[Callable, str, ast.FunctionD
 def _generate_input_props_name(func_name: str) -> str:
     Func_name = camelize(func_name, uppercase_first_letter=True)
     input_props_name = f"{Func_name}InputProps"
+    return input_props_name
+
+
+def _generate_output_props_name(func_name: str) -> str:
+    Func_name = camelize(func_name, uppercase_first_letter=True)
+    input_props_name = f"{Func_name}OutputProps"
     return input_props_name
 
 
