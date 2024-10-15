@@ -1,7 +1,12 @@
-from typing import Callable, Dict, Any, TypeVar, Generic
+from typing import Callable, Dict, Any, TypeVar, Generic, Literal
 import ast
 from crimson.ast_dev_tool import collect_nodes
-from crimson.auto_pydantic.generator import generate_input_props, _generate_input_props_name
+from crimson.auto_pydantic.generator import (
+    generate_input_props,
+    _generate_input_props_name,
+    generate_output_props,
+    _generate_output_props_name,
+)
 from inspect import getsource
 from crimson.intelli_type import IntelliType
 from types import FrameType
@@ -24,14 +29,14 @@ class Func_(IntelliType[Callable], Generic[T]):
 
 class CurrentFrame_(IntelliType[FrameType], Generic[T]):
     """
-    from inspect import currentframe()
+    from inspect import currentframe
 
     currentframe() : CurrentFrame_[FrameType]
 
     """
 
 
-class InputPropsModel_(IntelliType[BaseModel], Generic[T]):
+class InputPropsModel_(BaseModel, Generic[T]):
     """
     The generated model using the inputprops string from 'generator'.
     """
@@ -62,14 +67,31 @@ class _FunctionNode_(IntelliType[ast.FunctionDef], Generic[T]):
 
 
 def generate_inputprops_model(
-    func: Func_[Callable], currentframe: CurrentFrame_[FrameType], *args: Any, **kwargs: Any
-) -> InputPropsModel_[BaseModel]:
+    func: Func_[Callable], currentframe: CurrentFrame_[FrameType], env: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+) -> BaseModel:
     namespace = _prepare_namespace(currentframe, args, kwargs)
     function_node = _get_function_node(func)
     func_name = _generate_input_props_name(func.__name__)
 
-    InputProps = _create_input_props(function_node, func_name, namespace)
+    if len(env) != 0:
+        namespace.update(env)
+
+    InputProps = _create_props(function_node, func_name, namespace, mode='input')
     return InputProps
+
+
+def generate_outputprops_model(
+    func: Func_[Callable], currentframe: CurrentFrame_[FrameType], env: Dict[str, Any] = {}, *args: Any, **kwargs: Any
+) -> BaseModel:
+    namespace = _prepare_namespace(currentframe, args, kwargs)
+    function_node = _get_function_node(func)
+    func_name = _generate_output_props_name(func.__name__)
+
+    if len(env) != 0:
+        namespace.update(env)
+
+    OutputProps = _create_props(function_node, func_name, namespace, mode='output')
+    return OutputProps
 
 
 def _prepare_namespace(
@@ -98,10 +120,16 @@ def _get_function_node(func: Func_[Callable]) -> _FunctionNode_[ast.FunctionDef]
     return collect_nodes(func_source, ast.FunctionDef)[0]
 
 
-def _create_input_props(
-    function_node: _FunctionNode_[ast.FunctionDef], func_name: _FuncName_[str], namespace: _NameSpace_[Dict[str, Any]]
+def _create_props(
+    function_node: _FunctionNode_[ast.FunctionDef],
+    func_name: _FuncName_[str],
+    namespace: _NameSpace_[Dict[str, Any]],
+    mode: Literal["input", "output"],
 ) -> InputPropsModel_[BaseModel]:
-    model = generate_input_props(function_node)
+    if mode == "input":
+        model = generate_input_props(function_node)
+    elif mode == "output":
+        model = generate_output_props(function_node)
 
     model = (
         model
