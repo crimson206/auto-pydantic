@@ -1,8 +1,6 @@
 name: Test
 
 on:
-  pull_request:
-    branches: [ main, develop, 'release/*', 'feature/*' ]
   workflow_dispatch:
 
 jobs:
